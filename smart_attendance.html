@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Attendance Management</title>
+<style>
+  :root {
+    --primary: #2563EB; --primary-dark: #1E40AF; --success: #16A34A; --danger: #DC2626;
+    --bg: #F1F5F9; --surface: #FFFFFF; --text: #0F172A; --muted: #64748B; --border: #E2E8F0;
+    --radius: 14px; --shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  aside { background: var(--primary-dark); color: #fff; padding: 24px 16px; }
+  aside h2 { font-size: 18px; margin-bottom: 28px; }
+  aside button {
+    display: block; width: 100%; text-align: left; background: transparent; border: none; color: #CBD5E1;
+    padding: 10px 12px; border-radius: 10px; font-size: 15px; cursor: pointer; margin-bottom: 4px;
+  }
+  aside button.active, aside button:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  main { padding: 28px 32px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  h1 { font-size: 26px; margin-bottom: 4px; }
+  .sub { color: var(--muted); margin-bottom: 22px; font-size: 14px; }
+  .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .stat .num { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .stat .lbl { font-size: 13px; color: var(--muted); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  input, select { padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; }
+  input:focus, select:focus { outline: none; border-color: var(--primary); }
+  .btn { border: none; border-radius: 10px; padding: 10px 16px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-light { background: #EFF6FF; color: var(--primary); }
+  .btn-danger { background: #FEE2E2; color: var(--danger); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+  .tag { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
+  .P { background: #DCFCE7; color: var(--success); }
+  .A { background: #FEE2E2; color: var(--danger); }
+  .bar { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; min-width: 120px; }
+  .bar > div { height: 100%; background: var(--success); }
+  .empty { color: var(--muted); font-size: 14px; padding: 16px 0; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } aside { padding: 14px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <h2>SmartAttend</h2>
+    <button class="active" data-target="dashboard">Dashboard</button>
+    <button data-target="students">Students</button>
+    <button data-target="mark">Mark Attendance</button>
+    <button data-target="reports">Reports</button>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="screen active">
+      <h1>Dashboard</h1>
+      <p class="sub">Overview of today's attendance</p>
+      <div class="stats">
+        <div class="card stat"><div class="num" id="statStudents">0</div><div class="lbl">Total students</div></div>
+        <div class="card stat"><div class="num" id="statToday">0</div><div class="lbl">Marked today</div></div>
+        <div class="card stat"><div class="num" id="statPresent">0%</div><div class="lbl">Today's present rate</div></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:10px">Low attendance (below 75%)</h3>
+        <div id="lowList" class="empty">No data yet.</div>
+      </div>
+    </section>
+
+    <!-- STUDENTS -->
+    <section id="students" class="screen">
+      <h1>Students</h1>
+      <p class="sub">Add and manage students</p>
+      <div class="card">
+        <div class="row" style="margin-bottom:16px">
+          <input id="sName" placeholder="Full name">
+          <input id="sRoll" placeholder="Roll number">
+          <input id="sClass" placeholder="Class (e.g. CSE-A)">
+          <button class="btn btn-primary" onclick="addStudent()">Add student</button>
+        </div>
+        <table>
+          <thead><tr><th>Roll No</th><th>Name</th><th>Class</th><th></th></tr></thead>
+          <tbody id="studentTable"></tbody>
+        </table>
+        <p class="empty" id="studentEmpty">No students added yet.</p>
+      </div>
+    </section>
+
+    <!-- MARK ATTENDANCE -->
+    <section id="mark" class="screen">
+      <h1>Mark Attendance</h1>
+      <p class="sub">Tap a student's status to toggle Present / Absent</p>
+      <div class="card">
+        <div class="row" style="margin-bottom:16px">
+          <input type="date" id="mDate">
+          <select id="mClass" onchange="renderMark()"></select>
+          <button class="btn btn-light" onclick="markAll('P')">Mark all present</button>
+          <button class="btn btn-primary" onclick="saveAttendance()">Save</button>
+        </div>
+        <table>
+          <thead><tr><th>Roll No</th><th>Name</th><th>Status</th></tr></thead>
+          <tbody id="markTable"></tbody>
+        </table>
+        <p class="empty" id="markEmpty">Add students first.</p>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reports" class="screen">
+      <h1>Reports</h1>
+      <p class="sub">Attendance percentage per student</p>
+      <div class="card">
+        <div class="row" style="margin-bottom:16px">
+          <button class="btn btn-light" onclick="exportCSV()">Export CSV</button>
+        </div>
+        <table>
+          <thead><tr><th>Roll No</th><th>Name</th><th>Present / Total</th><th>Attendance</th></tr></thead>
+          <tbody id="reportTable"></tbody>
+        </table>
+        <p class="empty" id="reportEmpty">No attendance records yet.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // Data stored in browser localStorage
+  // students: [{id, name, roll, cls}]
+  // records: { "YYYY-MM-DD": { studentId: "P" | "A" } }
+  let students = JSON.parse(localStorage.getItem('sa_students') || '[]');
+  let records = JSON.parse(localStorage.getItem('sa_records') || '{}');
+  let markState = {};
+
+  const save = () => {
+    localStorage.setItem('sa_students', JSON.stringify(students));
+    localStorage.setItem('sa_records', JSON.stringify(records));
+  };
+  const today = () => new Date().toISOString().slice(0, 10);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // Navigation
+  document.querySelectorAll('aside button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('aside button').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === b.dataset.target));
+    refreshAll();
+  }));
+
+  // Students
+  function addStudent() {
+    const name = document.getElementById('sName').value.trim();
+    const roll = document.getElementById('sRoll').value.trim();
+    const cls = document.getElementById('sClass').value.trim() || 'General';
+    if (!name || !roll) { alert('Name and roll number are required.'); return; }
+    if (students.some(s => s.roll === roll)) { alert('Roll number already exists.'); return; }
+    students.push({ id: Date.now().toString(), name, roll, cls });
+    ['sName','sRoll','sClass'].forEach(id => document.getElementById(id).value = '');
+    save(); refreshAll();
+  }
+  function deleteStudent(id) {
+    if (!confirm('Delete this student and their records?')) return;
+    students = students.filter(s => s.id !== id);
+    Object.values(records).forEach(day => delete day[id]);
+    save(); refreshAll();
+  }
+  function renderStudents() {
+    document.getElementById('studentTable').innerHTML = students.map(s =>
+      `<tr><td>${esc(s.roll)}</td><td>${esc(s.name)}</td><td>${esc(s.cls)}</td>
+       <td><button class="btn btn-danger" onclick="deleteStudent('${s.id}')">Delete</button></td></tr>`).join('');
+    document.getElementById('studentEmpty').style.display = students.length ? 'none' : 'block';
+  }
+
+  // Mark attendance
+  function classes() { return [...new Set(students.map(s => s.cls))]; }
+  function renderMark() {
+    const sel = document.getElementById('mClass');
+    const cur = sel.value;
+    sel.innerHTML = classes().map(c => `<option>${esc(c)}</option>`).join('');
+    if (cur && classes().includes(cur)) sel.value = cur;
+    const date = document.getElementById('mDate').value || today();
+    const dayRec = records[date] || {};
+    const list = students.filter(s => s.cls === sel.value);
+    markState = {};
+    list.forEach(s => markState[s.id] = dayRec[s.id] || 'P');
+    document.getElementById('markTable').innerHTML = list.map(s =>
+      `<tr><td>${esc(s.roll)}</td><td>${esc(s.name)}</td>
+       <td><button class="tag ${markState[s.id]}" onclick="toggle('${s.id}')">${markState[s.id] === 'P' ? 'Present' : 'Absent'}</button></td></tr>`).join('');
+    document.getElementById('markEmpty').style.display = students.length ? 'none' : 'block';
+  }
+  function toggle(id) { markState[id] = markState[id] === 'P' ? 'A' : 'P'; renderMarkRows(); }
+  function renderMarkRows() {
+    document.querySelectorAll('#markTable tr').forEach((tr, i) => {
+      const s = students.filter(x => x.cls === document.getElementById('mClass').value)[i];
+      const st = markState[s.id];
+      tr.querySelector('.tag').className = `tag ${st}`;
+      tr.querySelector('.tag').textContent = st === 'P' ? 'Present' : 'Absent';
+      tr.querySelector('.tag').setAttribute('onclick', `toggle('${s.id}')`);
+    });
+  }
+  function markAll(v) { Object.keys(markState).forEach(k => markState[k] = v); renderMarkRows(); }
+  function saveAttendance() {
+    const date = document.getElementById('mDate').value || today();
+    records[date] = { ...(records[date] || {}), ...markState };
+    save(); refreshAll(); alert('Attendance saved for ' + date);
+  }
+
+  // Reports & dashboard
+  function stats() {
+    return students.map(s => {
+      let total = 0, present = 0;
+      Object.values(records).forEach(day => {
+        if (day[s.id]) { total++; if (day[s.id] === 'P') present++; }
+      });
+      return { ...s, total, present, pct: total ? Math.round(present / total * 100) : null };
+    });
+  }
+  function renderReports() {
+    const rows = stats();
+    document.getElementById('reportTable').innerHTML = rows.map(r => `
+      <tr><td>${esc(r.roll)}</td><td>${esc(r.name)}</td><td>${r.present} / ${r.total}</td>
+      <td><div class="row"><div class="bar" style="flex:1"><div style="width:${r.pct ?? 0}%;background:${(r.pct ?? 100) < 75 ? 'var(--danger)' : 'var(--success)'}"></div></div>
+      <span>${r.pct === null ? '-' : r.pct + '%'}</span></div></td></tr>`).join('');
+    document.getElementById('reportEmpty').style.display = students.length ? 'none' : 'block';
+  }
+  function renderDashboard() {
+    const d = today();
+    const dayRec = records[d] || {};
+    const marked = Object.keys(dayRec).length;
+    const presentToday = Object.values(dayRec).filter(v => v === 'P').length;
+    document.getElementById('statStudents').textContent = students.length;
+    document.getElementById('statToday').textContent = marked;
+    document.getElementById('statPresent').textContent = marked ? Math.round(presentToday / marked * 100) + '%' : '0%';
+    const low = stats().filter(r => r.pct !== null && r.pct < 75);
+    document.getElementById('lowList').innerHTML = low.length
+      ? low.map(r => `<p>${esc(r.name)} (${esc(r.roll)}) - ${r.pct}%</p>`).join('')
+      : 'No students below 75%.';
+  }
+  function exportCSV() {
+    const rows = [['Roll No','Name','Class','Present','Total','Percent']];
+    stats().forEach(r => rows.push([r.roll, r.name, r.cls, r.present, r.total, r.pct ?? '']));
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'attendance_report.csv';
+    a.click();
+  }
+
+  function refreshAll() {
+    renderStudents();
+    renderMark();
+    renderReports();
+    renderDashboard();
+  }
+
+  document.getElementById('mDate').value = today();
+  document.getElementById('mDate').addEventListener('change', renderMark);
+  document.getElementById('mClass').addEventListener('change', renderMark);
+  refreshAll();
+</script>
+</body>
+</html>

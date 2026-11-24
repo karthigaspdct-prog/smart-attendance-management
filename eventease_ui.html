@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EventEase - UI/UX Design</title>
+<style>
+  :root {
+    --primary: #5B3DF5;
+    --primary-dark: #4329C9;
+    --accent: #FF7A59;
+    --success: #1FB27A;
+    --bg: #F6F5FB;
+    --surface: #FFFFFF;
+    --text: #1C1B2E;
+    --muted: #6B6A80;
+    --border: #E4E2EF;
+    --radius: 16px;
+    --shadow: 0 8px 24px rgba(28, 27, 46, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header.app-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  .app-bar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo { font-weight: 800; font-size: 20px; color: var(--primary); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  nav.tabs button {
+    border: none; background: transparent; padding: 8px 14px; border-radius: 999px;
+    font-size: 14px; color: var(--muted); cursor: pointer; font-weight: 600;
+  }
+  nav.tabs button.active { background: var(--primary); color: #fff; }
+  main { padding: 32px 0 60px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  h1 { font-size: 32px; letter-spacing: -0.8px; margin-bottom: 8px; }
+  h2 { font-size: 22px; margin-bottom: 12px; }
+  h3 { font-size: 16px; margin-bottom: 6px; }
+  .sub { color: var(--muted); margin-bottom: 24px; }
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); box-shadow: var(--shadow); padding: 20px;
+  }
+  .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .hero {
+    background: linear-gradient(135deg, var(--primary), #8E6CFF);
+    color: #fff; border-radius: 24px; padding: 48px 36px; margin-bottom: 28px;
+  }
+  .hero h1 { color: #fff; font-size: 38px; }
+  .hero p { opacity: 0.9; max-width: 520px; margin: 10px 0 22px; }
+  .btn {
+    display: inline-block; border: none; border-radius: 12px; padding: 12px 20px;
+    font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: rgba(255,255,255,0.18); color: #fff; }
+  .btn-outline { background: var(--surface); border: 1.5px solid var(--primary); color: var(--primary); }
+  .btn-block { width: 100%; text-align: center; }
+  .chip {
+    display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px; background: #EEEAFE; color: var(--primary);
+  }
+  .chip.green { background: #E3F7EE; color: var(--success); }
+  .chip.orange { background: #FFEDE7; color: #D9542F; }
+  .event-thumb {
+    height: 120px; border-radius: 12px; margin-bottom: 14px;
+    background: linear-gradient(120deg, #FFB7A1, #FF7A59);
+  }
+  .event-thumb.b { background: linear-gradient(120deg, #9FD8FF, #5B3DF5); }
+  .event-thumb.c { background: linear-gradient(120deg, #A8F0CF, #1FB27A); }
+  .meta { font-size: 14px; color: var(--muted); margin: 6px 0 14px; }
+  .progress { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .progress > div { height: 100%; background: var(--success); }
+  .two-col { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; }
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } h1 { font-size: 26px; } .hero h1 { font-size: 28px; } }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: var(--muted); }
+  input, select {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px;
+    font-size: 15px; font-family: inherit; background: #fff;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--primary); }
+  .ticket {
+    max-width: 340px; margin: 0 auto; background: #fff; border-radius: 20px;
+    box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border);
+  }
+  .ticket-top { background: var(--primary); color: #fff; padding: 22px; }
+  .ticket-top small { opacity: 0.8; }
+  .ticket-body { padding: 22px; text-align: center; }
+  .qr {
+    width: 180px; height: 180px; margin: 6px auto 12px; display: grid;
+    grid-template-columns: repeat(11, 1fr); gap: 2px; padding: 10px; background: #fff;
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .qr i { background: var(--text); border-radius: 2px; }
+  .qr i.o { background: transparent; }
+  .ticket-divider { border-top: 2px dashed var(--border); margin: 0 -22px; position: relative; }
+  .ticket-divider::before, .ticket-divider::after {
+    content: ""; position: absolute; top: -12px; width: 22px; height: 22px; background: var(--bg); border-radius: 50%;
+  }
+  .ticket-divider::before { left: -11px; }
+  .ticket-divider::after { right: -11px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat { padding: 18px; }
+  .stat .num { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .stat .lbl { font-size: 13px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border); }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .scan-zone {
+    border: 2px dashed var(--primary); border-radius: 18px; height: 220px; display: flex;
+    align-items: center; justify-content: center; color: var(--primary); font-weight: 700;
+    background: #F4F1FF; text-align: center; padding: 20px;
+  }
+  .swatch { height: 70px; border-radius: 12px; padding: 8px; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: flex-end; }
+  .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 14px; }
+  .step-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+  .step-num {
+    flex: 0 0 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <div class="wrap">
+    <div class="logo">Event<span>Ease</span></div>
+    <nav class="tabs">
+      <button class="active" data-target="home">Home</button>
+      <button data-target="register">Register</button>
+      <button data-target="ticket">My Ticket</button>
+      <button data-target="organizer">Organizer</button>
+      <button data-target="system">Design System</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HOME -->
+  <section id="home" class="screen active">
+    <div class="hero">
+      <h1>Find an event. Get your QR ticket. Walk right in.</h1>
+      <p>Register for college events in seconds. Your ticket lives in your phone and attendance is marked with a single scan.</p>
+      <a class="btn btn-primary" href="#" onclick="show('register');return false;">Browse &amp; Register</a>
+    </div>
+
+    <h2>Upcoming Events</h2>
+    <p class="sub">Filter by department, date or category.</p>
+    <div class="grid" style="margin-bottom:22px">
+      <select style="max-width:220px"><option>All departments</option><option>CSE</option><option>ECE</option><option>Mechanical</option></select>
+      <select style="max-width:220px"><option>This week</option><option>This month</option></select>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="event-thumb"></div>
+        <span class="chip">Technical</span>
+        <h3 style="margin-top:10px">Code Sprint 2.0</h3>
+        <div class="meta">Dec 3 · 10:00 AM · Seminar Hall A</div>
+        <div class="progress"><div style="width:72%"></div></div>
+        <p class="note">72 of 100 seats filled</p>
+        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="show('register')">Register</button>
+      </div>
+      <div class="card">
+        <div class="event-thumb b"></div>
+        <span class="chip green">Cultural</span>
+        <h3 style="margin-top:10px">Kalai Vizha</h3>
+        <div class="meta">Dec 6 · 4:00 PM · Open Air Theatre</div>
+        <div class="progress"><div style="width:40%"></div></div>
+        <p class="note">Open for all departments</p>
+        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="show('register')">Register</button>
+      </div>
+      <div class="card">
+        <div class="event-thumb c"></div>
+        <span class="chip orange">Workshop</span>
+        <h3 style="margin-top:10px">Intro to UI/UX</h3>
+        <div class="meta">Dec 9 · 2:00 PM · Lab 3</div>
+        <div class="progress"><div style="width:95%"></div></div>
+        <p class="note">Only 5 seats left</p>
+        <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="show('register')">Register</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTER -->
+  <section id="register" class="screen">
+    <h1>Code Sprint 2.0</h1>
+    <p class="sub">Dec 3 · 10:00 AM · Seminar Hall A · Free entry</p>
+    <div class="two-col">
+      <div class="card">
+        <h2>Your details</h2>
+        <p class="sub">Use your college email. We'll send the QR ticket there.</p>
+        <label>Full name</label><input placeholder="e.g. Priya Kumar">
+        <label>College email</label><input placeholder="name@college.edu">
+        <label>Register number</label><input placeholder="e.g. 21CS045">
+        <label>Department</label>
+        <select><option>Computer Science</option><option>Electronics</option><option>Mechanical</option></select>
+        <label>Year</label>
+        <select><option>1st</option><option>2nd</option><option>3rd</option><option>4th</option></select>
+        <button class="btn btn-primary btn-block" style="margin-top:22px">Confirm Registration</button>
+      </div>
+      <div class="card">
+        <h2>How it works</h2>
+        <div class="step-row"><div class="step-num">1</div><div><h3>Fill the form</h3><p class="note">Takes under a minute.</p></div></div>
+        <div class="step-row"><div class="step-num">2</div><div><h3>Get your QR ticket</h3><p class="note">Shown instantly and emailed to you.</p></div></div>
+        <div class="step-row"><div class="step-num">3</div><div><h3>Scan at the entrance</h3><p class="note">Attendance is marked automatically.</p></div></div>
+        <p class="note" style="margin-top:10px">Seats remaining: 28</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKET -->
+  <section id="ticket" class="screen">
+    <h1>My Ticket</h1>
+    <p class="sub">Show this QR at the entrance. Works offline once loaded.</p>
+    <div class="ticket">
+      <div class="ticket-top">
+        <small>EVENTEASE · ADMIT ONE</small>
+        <h2 style="margin:4px 0 0; color:#fff">Code Sprint 2.0</h2>
+        <small>Dec 3 · 10:00 AM · Seminar Hall A</small>
+      </div>
+      <div class="ticket-body">
+        <div class="qr" id="qr"></div>
+        <strong>Priya Kumar</strong>
+        <div class="meta">21CS045 · Computer Science · 3rd Year</div>
+        <span class="chip green">Registered</span>
+      </div>
+      <div class="ticket-divider"></div>
+      <div class="ticket-body">
+        <small class="meta">Ticket ID EVT-CS2-0427</small>
+      </div>
+    </div>
+    <p class="note" style="text-align:center;margin-top:18px">Screenshot not needed. Your ticket is saved in the app.</p>
+  </section>
+
+  <!-- ORGANIZER -->
+  <section id="organizer" class="screen">
+    <h1>Organizer Dashboard</h1>
+    <p class="sub">Live attendance for Code Sprint 2.0</p>
+    <div class="stats">
+      <div class="card stat"><div class="num">72</div><div class="lbl">Registered</div></div>
+      <div class="card stat"><div class="num">58</div><div class="lbl">Checked in</div></div>
+      <div class="card stat"><div class="num">14</div><div class="lbl">Not yet arrived</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h2>Scan Entry</h2>
+        <div class="scan-zone">Point the camera at a student's QR ticket<br>Attendance is marked on a successful scan</div>
+        <p class="note">Duplicate scans are rejected. Invalid tickets show a red warning.</p>
+      </div>
+      <div class="card">
+        <h2>Recent check-ins</h2>
+        <table>
+          <tr><th>Name</th><th>Reg. No</th><th>Time</th></tr>
+          <tr><td>Priya Kumar</td><td>21CS045</td><td>10:02</td></tr>
+          <tr><td>Arun S</td><td>21CS011</td><td>10:03</td></tr>
+          <tr><td>Meena R</td><td>21EC022</td><td>10:05</td></tr>
+          <tr><td>Vignesh K</td><td>22ME008</td><td>10:06</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESIGN SYSTEM -->
+  <section id="system" class="screen">
+    <h1>Design System</h1>
+    <p class="sub">Colors, type and components used across EventEase.</p>
+    <div class="card" style="margin-bottom:20px">
+      <h2>Colors</h2>
+      <div class="palette">
+        <div class="swatch" style="background:#5B3DF5">Primary #5B3DF5</div>
+        <div class="swatch" style="background:#FF7A59">Accent #FF7A59</div>
+        <div class="swatch" style="background:#1FB27A">Success #1FB27A</div>
+        <div class="swatch" style="background:#1C1B2E">Text #1C1B2E</div>
+        <div class="swatch" style="background:#6B6A80">Muted #6B6A80</div>
+        <div class="swatch" style="background:#F6F5FB;color:#1C1B2E">Background #F6F5FB</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h2>Typography</h2>
+        <p style="font-size:32px;font-weight:800">Heading 32 / 800</p>
+        <p style="font-size:22px;font-weight:700">Section title 22 / 700</p>
+        <p style="font-size:16px;font-weight:600">Card title 16 / 600</p>
+        <p style="font-size:15px">Body text 15 / 400. Clear and easy to read on phones.</p>
+        <p class="note">Font: Inter (falls back to system UI font)</p>
+      </div>
+      <div class="card">
+        <h2>Components</h2>
+        <p style="margin-bottom:12px"><button class="btn btn-primary">Primary button</button></p>
+        <p style="margin-bottom:12px"><button class="btn btn-outline">Secondary button</button></p>
+        <p style="margin-bottom:12px"><span class="chip">Technical</span> <span class="chip green">Registered</span> <span class="chip orange">Few seats</span></p>
+        <p class="note">Corner radius 12–16px. Card shadow soft. 8px spacing grid.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.target === id));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.target)));
+
+  // Placeholder QR-style pattern (visual only, not a scannable code)
+  const qr = document.getElementById('qr');
+  const pattern = [
+    "11111110101",
+    "10000010001",
+    "10111010111",
+    "10111011001",
+    "10111010101",
+    "10000010011",
+    "11111110111",
+    "00001000100",
+    "10110111011",
+    "01001001110",
+    "11011110101"
+  ];
+  pattern.forEach(row => {
+    for (const c of row) {
+      const i = document.createElement('i');
+      if (c === '0') i.className = 'o';
+      qr.appendChild(i);
+    }
+  });
+</script>
+</body>
+</html>
